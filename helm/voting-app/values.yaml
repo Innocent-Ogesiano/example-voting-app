@@ -1,0 +1,32 @@
+imagePullSecrets: []
+
+vote:
+  image: dockersamples/examplevotingapp_vote
+  tag: latest
+  replicas: 1
+  containerPort: 8080
+  nodePort: 31000
+
+result:
+  image: dockersamples/examplevotingapp_result
+  tag: latest
+  replicas: 1
+  containerPort: 8081
+  nodePort: 31001
+
+worker:
+  image: dockersamples/examplevotingapp_worker
+  tag: latest
+  replicas: 1
+
+redis:
+  image: redis
+  tag: alpine
+  port: 6379
+
+db:
+  image: postgres
+  tag: 15-alpine
+  port: 5432
+  user: postgres
+  password: postgres

@@ -7,8 +7,32 @@ resource "aws_eks_cluster" "voting_app_cluster" {
     subnet_ids = data.aws_subnets.default_vpc_subnets.ids
   }
 
+  access_config {
+    authentication_mode                         = "API"
+    bootstrap_cluster_creator_admin_permissions = true
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy_attachment,
+  ]
+}
+
+resource "aws_eks_access_entry" "github_actions" {
+  cluster_name  = aws_eks_cluster.voting_app_cluster.name
+  principal_arn = aws_iam_role.github_actions.arn
+}
+
+resource "aws_eks_access_policy_association" "github_actions_admin" {
+  cluster_name  = aws_eks_cluster.voting_app_cluster.name
+  principal_arn = aws_iam_role.github_actions.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [
+    aws_eks_access_entry.github_actions,
   ]
 }
 
