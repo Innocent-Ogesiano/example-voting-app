@@ -53,7 +53,7 @@ jobs:
           push: false
 
       - name: Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: ghcr.io/${{ github.repository_owner }}/example-voting-app-${{ matrix.service }}:${{ github.sha }}
           format: table
