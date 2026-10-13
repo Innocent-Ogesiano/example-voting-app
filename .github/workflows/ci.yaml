@@ -91,6 +91,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::385685326245:role/example-voting-app-github-actions-role
           aws-region: us-west-2
+          role-skip-session-tagging: true
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
