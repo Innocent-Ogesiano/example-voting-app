@@ -39,3 +39,15 @@ variable "node_max_size" {
   type        = number
   default     = 2
 }
+
+variable "github_repository" {
+  description = "GitHub repository (org/repo) allowed to assume the CI role via OIDC"
+  type        = string
+  default     = "Innocent-Ogesiano/example-voting-app"
+}
+
+variable "tfstate_bucket" {
+  description = "S3 bucket holding Terraform remote state"
+  type        = string
+  default     = "example-voting-app-tfstate-385685326245"
+}
