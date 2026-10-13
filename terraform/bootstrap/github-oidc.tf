@@ -39,6 +39,7 @@ data "aws_iam_policy_document" "github_actions_permissions" {
     actions = [
       "s3:GetObject",
       "s3:PutObject",
+      "s3:DeleteObject",
       "s3:ListBucket",
     ]
     resources = [
@@ -66,6 +67,7 @@ data "aws_iam_policy_document" "github_actions_permissions" {
       "iam:DetachRolePolicy",
       "iam:ListAttachedRolePolicies",
       "iam:ListInstanceProfilesForRole",
+      "iam:ListRolePolicies",
     ]
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.cluster_name}-*",
@@ -82,6 +84,7 @@ data "aws_iam_policy_document" "github_actions_permissions" {
     sid = "Ec2ReadOnly"
     actions = [
       "ec2:DescribeVpcs",
+      "ec2:DescribeVpcAttribute",
       "ec2:DescribeSubnets",
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeAvailabilityZones",
