@@ -16,6 +16,12 @@ variable "github_repository" {
   default     = "Innocent-Ogesiano/example-voting-app"
 }
 
+variable "github_repository_id" {
+  description = "Immutable numeric GitHub repository ID (GET /repos/{owner}/{repo} -> .id), used to match the OIDC token's repository_id claim regardless of repo renames"
+  type        = string
+  default     = "1414155645"
+}
+
 variable "tfstate_bucket" {
   description = "S3 bucket holding Terraform remote state (for both this bootstrap stack and the main stack)"
   type        = string
