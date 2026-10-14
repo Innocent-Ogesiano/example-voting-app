@@ -75,6 +75,18 @@ data "aws_iam_policy_document" "github_actions_permissions" {
   }
 
   statement {
+    sid = "EksServiceLinkedRole"
+    actions = [
+      "iam:GetRole",
+      "iam:CreateServiceLinkedRole",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/eks.amazonaws.com/AWSServiceRoleForAmazonEKS",
+    ]
+  }
+
+  statement {
     sid       = "IamOidcReadOnly"
     actions   = ["iam:GetOpenIDConnectProvider"]
     resources = [aws_iam_openid_connect_provider.github_actions.arn]
