@@ -46,6 +46,24 @@ To remove them, run:
 kubectl delete -f k8s-specifications/
 ```
 
+### Run the app with Helm
+
+A Helm chart (`helm/voting-app`) packages the same services with one `values.yaml`:
+
+```shell
+helm install voting-app ./helm/voting-app
+```
+
+```shell
+helm uninstall voting-app
+```
+
+### Deploy to AWS (EKS)
+
+Terraform (in `terraform/`) provisions an EKS cluster in the default VPC, and
+GitHub Actions (`.github/workflows/ci.yaml`) builds, scans, and deploys the
+app to it on every push to `main`.
+
 ## Architecture
 
 ![Architecture diagram](architecture.excalidraw.png)
