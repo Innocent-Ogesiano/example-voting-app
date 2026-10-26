@@ -22,8 +22,14 @@ variable "github_repository_id" {
   default     = "1414155645"
 }
 
-variable "tfstate_bucket" {
-  description = "S3 bucket holding Terraform remote state (for both this bootstrap stack and the main stack)"
+variable "hcp_organization" {
+  description = "HCP Terraform organization whose runs may assume the Terraform IAM role"
   type        = string
-  default     = "example-voting-app-tfstate-385685326245"
+  default     = "ts-academy"
+}
+
+variable "hcp_workspace" {
+  description = "HCP Terraform workspace (main stack) whose runs may assume the Terraform IAM role"
+  type        = string
+  default     = "example-voting-app-eks"
 }
