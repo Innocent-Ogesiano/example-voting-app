@@ -35,19 +35,54 @@ resource "aws_iam_role" "github_actions" {
 
 data "aws_iam_policy_document" "github_actions_permissions" {
   statement {
-    sid = "TerraformState"
-    actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject",
-      "s3:ListBucket",
-    ]
-    resources = [
-      "arn:aws:s3:::${var.tfstate_bucket}",
-      "arn:aws:s3:::${var.tfstate_bucket}/*",
-    ]
+    sid       = "EksKubeconfig"
+    actions   = ["eks:DescribeCluster"]
+    resources = ["*"]
   }
+}
 
+resource "aws_iam_role_policy" "github_actions" {
+  name   = "${var.cluster_name}-github-actions-policy"
+  role   = aws_iam_role.github_actions.id
+  policy = data.aws_iam_policy_document.github_actions_permissions.json
+}
+
+# HCP Terraform runs the main stack remotely and authenticates to AWS through
+# its own OIDC identity (dynamic credentials).
+resource "aws_iam_openid_connect_provider" "hcp_terraform" {
+  url            = "https://app.terraform.io"
+  client_id_list = ["aws.workflows.terraform.io"]
+}
+
+data "aws_iam_policy_document" "hcp_terraform_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.hcp_terraform.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "app.terraform.io:aud"
+      values   = ["aws.workflows.terraform.io"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "app.terraform.io:sub"
+      values   = ["organization:${var.hcp_organization}:project:*:workspace:${var.hcp_workspace}:run_phase:*"]
+    }
+  }
+}
+
+resource "aws_iam_role" "hcp_terraform" {
+  name               = "${var.cluster_name}-hcp-terraform-role"
+  assume_role_policy = data.aws_iam_policy_document.hcp_terraform_assume_role.json
+}
+
+data "aws_iam_policy_document" "hcp_terraform_permissions" {
   statement {
     sid       = "EksManagement"
     actions   = ["eks:*"]
@@ -105,8 +140,8 @@ data "aws_iam_policy_document" "github_actions_permissions" {
   }
 }
 
-resource "aws_iam_role_policy" "github_actions" {
-  name   = "${var.cluster_name}-github-actions-policy"
-  role   = aws_iam_role.github_actions.id
-  policy = data.aws_iam_policy_document.github_actions_permissions.json
+resource "aws_iam_role_policy" "hcp_terraform" {
+  name   = "${var.cluster_name}-hcp-terraform-policy"
+  role   = aws_iam_role.hcp_terraform.id
+  policy = data.aws_iam_policy_document.hcp_terraform_permissions.json
 }

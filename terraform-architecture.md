@@ -1,7 +1,7 @@
 # Terraform Architecture
 
-Two independent Terraform stacks share one S3 state bucket. `bootstrap/` is
-applied once, manually, with real AWS credentials. `terraform/` (main) is
+Two independent Terraform stacks keep state in HCP Terraform (org `ts-academy`). `bootstrap/` is
+applied once, manually, with real AWS credentials (its workspace uses local execution). `terraform/` (main) is
 what CI creates and destroys on every push to `main` — it references the
 bootstrap role by name, never owns it, so destroying the cluster never
 breaks CI's own ability to authenticate.
@@ -16,17 +16,20 @@ flowchart TB
         T1 --> T2 --> T3
     end
 
-    subgraph S3["S3 bucket: example-voting-app-tfstate-*"]
+    subgraph S3["HCP Terraform: ts-academy"]
         direction LR
-        S1["bootstrap/terraform.tfstate"]
-        S2["eks/terraform.tfstate"]
+        S1["workspace: example-voting-app-bootstrap\n(local execution)"]
+        S2["workspace: example-voting-app-eks\n(remote execution)"]
     end
 
     subgraph Bootstrap["terraform/bootstrap/ (applied manually, once)"]
         direction TB
         OIDC["aws_iam_openid_connect_provider\ntoken.actions.githubusercontent.com"]
         Role["aws_iam_role\nexample-voting-app-github-actions-role\n(trust: job_workflow_ref + sts:TagSession)"]
-        Policy["aws_iam_role_policy\n(eks:*, iam:*Role, ec2:Describe*,\ns3 state bucket rw)"]
+        Policy["aws_iam_role_policy\n(eks:DescribeCluster)"]
+        HcpOIDC["aws_iam_openid_connect_provider\napp.terraform.io"]
+        HcpRole["aws_iam_role\nexample-voting-app-hcp-terraform-role\n(eks:*, iam:*Role, ec2:Describe*)"]
+        HcpOIDC --> HcpRole
         OIDC --> Role
         Policy --> Role
     end
@@ -51,7 +54,8 @@ flowchart TB
     Helm["helm upgrade --install voting-app\n(vote, result, worker, redis, db)"]
 
     T3 -- "assumes via OIDC" --> Role
-    T3 -- "terraform apply" --> Main
+    T3 -- "terraform apply\n(remote HCP run)" --> Main
+    Main -- "assumes via HCP OIDC" --> HcpRole
     Main -- "state" --> S2
     Bootstrap -- "state" --> S1
     NodeGroup --> EKS
