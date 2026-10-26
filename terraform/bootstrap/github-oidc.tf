@@ -51,7 +51,7 @@ resource "aws_iam_role_policy" "github_actions" {
 # its own OIDC identity (dynamic credentials).
 resource "aws_iam_openid_connect_provider" "hcp_terraform" {
   url            = "https://app.terraform.io"
-  client_id_list = ["aws.workflows.terraform.io"]
+  client_id_list = ["aws.workload.identity"]
 }
 
 data "aws_iam_policy_document" "hcp_terraform_assume_role" {
@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "hcp_terraform_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "app.terraform.io:aud"
-      values   = ["aws.workflows.terraform.io"]
+      values   = ["aws.workload.identity"]
     }
 
     condition {
