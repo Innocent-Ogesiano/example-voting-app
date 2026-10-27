@@ -64,6 +64,11 @@ Terraform (in `terraform/`) provisions an EKS cluster in the default VPC, and
 GitHub Actions (`.github/workflows/ci.yaml`) builds, scans, and deploys the
 app to it on every push to `main`.
 
+See [terraform-architecture.md](terraform-architecture.md) for the full AWS
+and Terraform architecture diagram.
+
+![Terraform and AWS architecture](terraform-architecture.drawio.png)
+
 #### GitOps (Argo CD) and autoscaling
 
 On EKS the app is deployed by Argo CD, not by `helm upgrade` from CI. CI installs
