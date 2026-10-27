@@ -64,6 +64,32 @@ Terraform (in `terraform/`) provisions an EKS cluster in the default VPC, and
 GitHub Actions (`.github/workflows/ci.yaml`) builds, scans, and deploys the
 app to it on every push to `main`.
 
+#### Using this in your own AWS account
+
+Nothing account-specific is committed, so to run it yourself:
+
+1. **HCP Terraform:** create an organization and two CLI-driven workspaces,
+   `example-voting-app-bootstrap` (execution mode **Local**) and
+   `example-voting-app-eks` (execution mode **Remote**). Run `terraform login`.
+2. **Bootstrap (once, from your machine with AWS credentials):**
+   ```shell
+   cd terraform/bootstrap
+   cp terraform.tfvars.example terraform.tfvars   # set github_repository and hcp_organization
+   export TF_CLOUD_ORGANIZATION=<your-hcp-org> TF_WORKSPACE=example-voting-app-bootstrap
+   terraform init && terraform apply
+   ```
+3. **HCP workspace variables** on `example-voting-app-eks` (environment variables):
+   `TFC_AWS_PROVIDER_AUTH=true` and `TFC_AWS_RUN_ROLE_ARN=<hcp_terraform_role_arn output>`.
+4. **GitHub repository settings** (Settings > Secrets and variables > Actions):
+   - Secret `TF_API_TOKEN`: an HCP Terraform API token.
+   - Variables `AWS_ROLE_ARN` (the `github_actions_role_arn` output) and
+     `TF_CLOUD_ORGANIZATION`. Optional: `AWS_REGION`, `CLUSTER_NAME` and
+     `TF_WORKSPACE` (defaults: `us-west-2`, `example-voting-app`,
+     `example-voting-app-eks`). If you change region or cluster name, set the
+     same values as Terraform variables on the `-eks` workspace and in the
+     bootstrap `terraform.tfvars`.
+5. Push to `main`.
+
 ## Architecture
 
 ![Architecture diagram](architecture.excalidraw.png)

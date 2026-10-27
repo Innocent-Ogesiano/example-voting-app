@@ -86,14 +86,20 @@ jobs:
     needs: scan-build-push
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      # Repository variables (Settings > Secrets and variables > Actions > Variables)
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+      CLUSTER_NAME: ${{ vars.CLUSTER_NAME || 'example-voting-app' }}
+      TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+      TF_WORKSPACE: ${{ vars.TF_WORKSPACE || 'example-voting-app-eks' }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::385685326245:role/example-voting-app-github-actions-role
-          aws-region: us-west-2
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -108,7 +114,7 @@ jobs:
           terraform apply -auto-approve -input=false
 
       - name: Update kubeconfig
-        run: aws eks update-kubeconfig --name example-voting-app --region us-west-2
+        run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -121,8 +127,8 @@ jobs:
           helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
             --namespace kube-system \
             --version 3.5.0 \
-            --set clusterName=example-voting-app \
-            --set region=us-west-2 \
+            --set clusterName="$CLUSTER_NAME" \
+            --set region="$AWS_REGION" \
             --set vpcId="$(terraform output -raw vpc_id)" \
             --set serviceAccount.name=aws-load-balancer-controller \
             --wait --timeout 5m
