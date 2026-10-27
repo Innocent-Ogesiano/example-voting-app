@@ -1,0 +1,39 @@
+# Argo CD Application for the voting app. CI renders it with envsubst
+# (GITHUB_REPOSITORY, OWNER, IMAGE_TAG) and applies it on every deploy, which
+# is how new image tags reach the cluster without committing to git.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: voting-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/${GITHUB_REPOSITORY}.git
+    targetRevision: main
+    path: helm/voting-app
+    helm:
+      valueFiles:
+        - values-eks.yaml
+      parameters:
+        - name: imagePullSecrets[0].name
+          value: "ghcr-creds"
+        - name: vote.image
+          value: "ghcr.io/${OWNER}/example-voting-app-vote"
+        - name: vote.tag
+          value: "${IMAGE_TAG}"
+        - name: result.image
+          value: "ghcr.io/${OWNER}/example-voting-app-result"
+        - name: result.tag
+          value: "${IMAGE_TAG}"
+        - name: worker.image
+          value: "ghcr.io/${OWNER}/example-voting-app-worker"
+        - name: worker.tag
+          value: "${IMAGE_TAG}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

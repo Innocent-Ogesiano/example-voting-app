@@ -5,7 +5,9 @@ metadata:
     app: vote
   name: vote
 spec:
+  {{- if not .Values.vote.autoscaling.enabled }}
   replicas: {{ .Values.vote.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: vote
@@ -21,6 +23,10 @@ spec:
       containers:
       - image: "{{ .Values.vote.image }}:{{ .Values.vote.tag }}"
         name: vote
+        {{- with .Values.vote.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         ports:
         - containerPort: {{ .Values.vote.containerPort }}
           name: vote

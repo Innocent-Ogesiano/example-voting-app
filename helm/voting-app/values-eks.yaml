@@ -16,3 +16,18 @@ ingress:
     host: ""
     annotations:
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 8080}]'
+
+# CPU-based pod autoscaling (needs metrics-server, installed by CI). Replicas
+# are then owned by the HPA, so the Deployments omit `replicas`.
+vote:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+result:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+worker:
+  autoscaling:
+    enabled: true
+    minReplicas: 1
