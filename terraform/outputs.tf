@@ -10,6 +10,10 @@ output "cluster_certificate_authority_data" {
   value = aws_eks_cluster.voting_app_cluster.certificate_authority[0].data
 }
 
+output "vpc_id" {
+  value = data.aws_vpc.default_vpc.id
+}
+
 output "configure_kubectl" {
   value = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.voting_app_cluster.name}"
 }

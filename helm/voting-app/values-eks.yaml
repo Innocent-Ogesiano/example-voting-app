@@ -1,0 +1,18 @@
+# Overrides for EKS with the AWS Load Balancer Controller. One internet-facing
+# ALB serves both apps: vote on port 80, result on port 8080 (the result app
+# can't be served under a path prefix, so the ports separate them).
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: instance
+    alb.ingress.kubernetes.io/group.name: voting-app
+  vote:
+    host: ""
+    annotations:
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  result:
+    host: ""
+    annotations:
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 8080}]'

@@ -11,25 +11,17 @@ variable "cluster_name" {
 }
 
 variable "github_repository" {
-  description = "GitHub repository (org/repo) allowed to assume the CI role via OIDC"
+  description = "GitHub repository (owner/repo) allowed to assume the CI role via OIDC"
   type        = string
-  default     = "Innocent-Ogesiano/example-voting-app"
-}
-
-variable "github_repository_id" {
-  description = "Immutable numeric GitHub repository ID (GET /repos/{owner}/{repo} -> .id), used to match the OIDC token's repository_id claim regardless of repo renames"
-  type        = string
-  default     = "1414155645"
 }
 
 variable "hcp_organization" {
   description = "HCP Terraform organization whose runs may assume the Terraform IAM role"
   type        = string
-  default     = "ts-academy"
 }
 
 variable "hcp_workspace" {
-  description = "HCP Terraform workspace (main stack) whose runs may assume the Terraform IAM role"
+  description = "HCP Terraform workspace (main stack) whose runs may assume the Terraform IAM role (must match TF_WORKSPACE for the main stack)"
   type        = string
   default     = "example-voting-app-eks"
 }

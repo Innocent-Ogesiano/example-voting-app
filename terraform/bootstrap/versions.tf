@@ -8,13 +8,9 @@ terraform {
     }
   }
 
-  cloud {
-    organization = "ts-academy"
-
-    workspaces {
-      name = "example-voting-app-bootstrap"
-    }
-  }
+  # Organization and workspace come from the environment so the repo isn't tied
+  # to one HCP account: TF_CLOUD_ORGANIZATION and TF_WORKSPACE.
+  cloud {}
 }
 
 provider "aws" {

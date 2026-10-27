@@ -1,6 +1,6 @@
 # Terraform Architecture
 
-Two independent Terraform stacks keep state in HCP Terraform (org `ts-academy`). `bootstrap/` is
+Two independent Terraform stacks keep state in HCP Terraform (your HCP org). `bootstrap/` is
 applied once, manually, with real AWS credentials (its workspace uses local execution). `terraform/` (main) is
 what CI creates and destroys on every push to `main` — it references the
 bootstrap role by name, never owns it, so destroying the cluster never
@@ -16,7 +16,7 @@ flowchart TB
         T1 --> T2 --> T3
     end
 
-    subgraph S3["HCP Terraform: ts-academy"]
+    subgraph S3["HCP Terraform org"]
         direction LR
         S1["workspace: example-voting-app-bootstrap\n(local execution)"]
         S2["workspace: example-voting-app-eks\n(remote execution)"]
