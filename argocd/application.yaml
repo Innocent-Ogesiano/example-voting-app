@@ -6,6 +6,9 @@ kind: Application
 metadata:
   name: voting-app
   namespace: argocd
+  # Deleting the Application also deletes the app's resources (and so the ALB).
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
