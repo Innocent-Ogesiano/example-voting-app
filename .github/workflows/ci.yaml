@@ -133,6 +133,40 @@ jobs:
             --set serviceAccount.name=aws-load-balancer-controller \
             --wait --timeout 5m
 
+      - name: Install metrics-server
+        run: |
+          helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+          helm repo update metrics-server
+          helm upgrade --install metrics-server metrics-server/metrics-server \
+            --namespace kube-system \
+            --version 3.14.0 \
+            --wait --timeout 5m
+
+      - name: Install Cluster Autoscaler
+        run: |
+          helm repo add autoscaler https://kubernetes.github.io/autoscaler
+          helm repo update autoscaler
+          # The chart's default image is 1.35; the autoscaler minor must match the cluster (1.36).
+          helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
+            --namespace kube-system \
+            --version 9.59.0 \
+            --set autoDiscovery.clusterName="$CLUSTER_NAME" \
+            --set awsRegion="$AWS_REGION" \
+            --set image.tag=v1.36.1 \
+            --set rbac.serviceAccount.name=cluster-autoscaler \
+            --wait --timeout 5m
+
+      - name: Install Argo CD
+        run: |
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo update argo
+          helm upgrade --install argocd argo/argo-cd \
+            --namespace argocd --create-namespace \
+            --version 10.10.5 \
+            --set dex.enabled=false \
+            --set notifications.enabled=false \
+            --wait --timeout 10m
+
       - name: Create GHCR pull secret
         run: |
           kubectl create secret docker-registry ghcr-creds \
@@ -141,19 +175,24 @@ jobs:
             --docker-password=${{ secrets.GITHUB_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy with Helm
+      - name: Deploy with Argo CD
         run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          helm upgrade --install voting-app ./helm/voting-app \
-            -f helm/voting-app/values-eks.yaml \
-            --set imagePullSecrets[0].name=ghcr-creds \
-            --set vote.image=ghcr.io/$OWNER/example-voting-app-vote \
-            --set vote.tag=${{ github.sha }} \
-            --set result.image=ghcr.io/$OWNER/example-voting-app-result \
-            --set result.tag=${{ github.sha }} \
-            --set worker.image=ghcr.io/$OWNER/example-voting-app-worker \
-            --set worker.tag=${{ github.sha }} \
-            --wait --timeout 5m
+          # One-time migration: the app used to be a direct Helm release. Remove it so
+          # Argo CD owns the resources (this recreates the ALB once).
+          if helm status voting-app >/dev/null 2>&1; then
+            helm uninstall voting-app
+          fi
+
+          export OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          export IMAGE_TAG="${{ github.sha }}"
+          envsubst < argocd/application.yaml | kubectl apply -f -
+          kubectl annotate application voting-app -n argocd argocd.argoproj.io/refresh=hard --overwrite
+
+          kubectl wait application/voting-app -n argocd --for=jsonpath='{.status.sync.status}'=Synced --timeout=5m
+          kubectl wait application/voting-app -n argocd --for=jsonpath='{.status.health.status}'=Healthy --timeout=10m
+          for d in vote result worker; do
+            kubectl rollout status deployment/$d --timeout=5m
+          done
 
       - name: Show app URL
         run: |

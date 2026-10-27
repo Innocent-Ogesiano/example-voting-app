@@ -5,7 +5,9 @@ metadata:
     app: worker
   name: worker
 spec:
+  {{- if not .Values.worker.autoscaling.enabled }}
   replicas: {{ .Values.worker.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: worker
@@ -21,3 +23,7 @@ spec:
       containers:
       - image: "{{ .Values.worker.image }}:{{ .Values.worker.tag }}"
         name: worker
+        {{- with .Values.worker.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}

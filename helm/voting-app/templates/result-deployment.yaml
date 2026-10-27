@@ -5,7 +5,9 @@ metadata:
     app: result
   name: result
 spec:
+  {{- if not .Values.result.autoscaling.enabled }}
   replicas: {{ .Values.result.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: result
@@ -21,6 +23,10 @@ spec:
       containers:
       - image: "{{ .Values.result.image }}:{{ .Values.result.tag }}"
         name: result
+        {{- with .Values.result.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         ports:
         - containerPort: {{ .Values.result.containerPort }}
           name: result

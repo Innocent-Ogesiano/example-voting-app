@@ -64,6 +64,33 @@ Terraform (in `terraform/`) provisions an EKS cluster in the default VPC, and
 GitHub Actions (`.github/workflows/ci.yaml`) builds, scans, and deploys the
 app to it on every push to `main`.
 
+#### GitOps (Argo CD) and autoscaling
+
+On EKS the app is deployed by Argo CD, not by `helm upgrade` from CI. CI installs
+Argo CD, then applies `argocd/application.yaml`, which points Argo CD at
+`helm/voting-app` on `main` (with `values-eks.yaml`) and passes the new image
+tags as Helm parameters. Argo CD syncs automatically (prune + self-heal), and CI
+waits for the Application to be Synced and Healthy. **The repo must be public**,
+or you must give Argo CD credentials for it (`argocd repo add` / a repository secret).
+
+Open the Argo CD UI (it's ClusterIP only):
+
+```shell
+kubectl port-forward svc/argocd-server -n argocd 8443:443
+# https://localhost:8443, user: admin
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+```
+
+Autoscaling, all installed by CI:
+- **Pods:** metrics-server plus CPU-based HPAs for vote, result and worker
+  (`helm/voting-app/values-eks.yaml`, target 70% of the CPU request).
+- **Nodes:** Cluster Autoscaler scales the managed node group between
+  `node_min_size` and `node_max_size` (default 2-3). Its image tag in
+  `ci.yaml` must match the cluster's Kubernetes minor version.
+
+Two t3.medium nodes are tight for Argo CD plus the app; if pods stay Pending,
+raise `node_max_size` or the instance type.
+
 #### Using this in your own AWS account
 
 Nothing account-specific is committed, so to run it yourself:

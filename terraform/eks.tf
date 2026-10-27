@@ -68,6 +68,17 @@ resource "aws_eks_node_group" "voting_app_nodes" {
     max_size     = var.node_max_size
   }
 
+  # Auto-discovery tags for the Cluster Autoscaler (propagated to the node group's ASG).
+  tags = {
+    "k8s.io/cluster-autoscaler/enabled"             = "true"
+    "k8s.io/cluster-autoscaler/${var.cluster_name}" = "owned"
+  }
+
+  # The Cluster Autoscaler changes the desired size at runtime.
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_node_worker_policy_attachment,
     aws_iam_role_policy_attachment.eks_node_cni_policy_attachment,
