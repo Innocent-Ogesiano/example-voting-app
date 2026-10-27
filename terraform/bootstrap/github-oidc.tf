@@ -159,6 +159,7 @@ data "aws_iam_policy_document" "hcp_terraform_permissions" {
       "ec2:DescribeSubnets",
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeAvailabilityZones",
+      "ec2:DescribeTags",
     ]
     resources = ["*"]
   }
