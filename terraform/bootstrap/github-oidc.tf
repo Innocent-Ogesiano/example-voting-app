@@ -122,6 +122,30 @@ data "aws_iam_policy_document" "hcp_terraform_permissions" {
   }
 
   statement {
+    sid = "IamPolicyManagement"
+    actions = [
+      "iam:CreatePolicy",
+      "iam:DeletePolicy",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:ListPolicyVersions",
+      "iam:CreatePolicyVersion",
+      "iam:DeletePolicyVersion",
+      "iam:TagPolicy",
+      "iam:UntagPolicy",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.cluster_name}-*",
+    ]
+  }
+
+  statement {
+    sid       = "SubnetTagging"
+    actions   = ["ec2:CreateTags", "ec2:DeleteTags"]
+    resources = ["arn:aws:ec2:*:*:subnet/*"]
+  }
+
+  statement {
     sid       = "IamOidcReadOnly"
     actions   = ["iam:GetOpenIDConnectProvider"]
     resources = [aws_iam_openid_connect_provider.github_actions.arn]

@@ -30,3 +30,15 @@ db:
   port: 5432
   user: postgres
   password: postgres
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  vote:
+    host: vote.example.com
+    path: /
+  result:
+    host: result.example.com
+    path: /
+  tls: []
